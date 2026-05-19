@@ -11,11 +11,13 @@ public sealed class CoopHud : Component
 	[Property] public bool ShowControls { get; set; } = true;
 
 	HealthComponent health;
+	StaminaComponent stamina;
 	CarryInteractor carry;
 
 	protected override void OnStart()
 	{
 		health = GetComponent<HealthComponent>();
+		stamina = GetComponent<StaminaComponent>();
 		carry = GetComponent<CarryInteractor>();
 	}
 
@@ -30,6 +32,12 @@ public sealed class CoopHud : Component
 		{
 			var status = health.IsDead ? "DOWN" : $"{health.CurrentHealth:0}/{health.MaxHealth:0}";
 			DrawLine( ref y, $"Health: {status}", health.IsDead ? Color.Red : Color.White );
+		}
+
+		if ( stamina.IsValid() )
+		{
+			var staminaColor = stamina.IsExhausted ? Color.Red : Color.Green;
+			DrawLine( ref y, $"Stamina: {stamina.CurrentStamina:0}/{stamina.MaxStamina:0} {BuildProgressBar( stamina.Fraction )}", staminaColor );
 		}
 
 		var objective = Scene.GetAllComponents<ObjectiveManager>().FirstOrDefault();

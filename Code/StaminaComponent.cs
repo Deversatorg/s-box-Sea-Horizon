@@ -18,7 +18,7 @@ public sealed class StaminaComponent : Component
 	float timeSinceDrain;
 	bool exhausted;
 
-	public bool IsRunning { get; private set; }
+	public bool IsSprinting { get; private set; }
 	public bool IsExhausted => exhausted;
 	public float Fraction => MaxStamina <= 0f ? 0f : CurrentStamina / MaxStamina;
 
@@ -36,7 +36,7 @@ public sealed class StaminaComponent : Component
 
 		if ( !controller.IsValid() || !controller.Enabled )
 		{
-			IsRunning = false;
+			IsSprinting = false;
 			return;
 		}
 
@@ -44,9 +44,9 @@ public sealed class StaminaComponent : Component
 			configuredRunSpeed = controller.RunSpeed;
 
 		var wantsRun = Input.Down( RunAction ) || Input.Down( "Run" );
-		IsRunning = wantsRun && !exhausted && CurrentStamina > 0f;
+		IsSprinting = wantsRun && !exhausted && CurrentStamina > 0f;
 
-		if ( IsRunning )
+		if ( IsSprinting )
 		{
 			CurrentStamina = System.MathF.Max( CurrentStamina - DrainPerSecond * Time.Delta, 0f );
 			timeSinceDrain = 0f;

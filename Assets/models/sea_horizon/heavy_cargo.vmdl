@@ -1,0 +1,151 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc29:version{3cec427c-1b0e-4d48-a90a-0436f33a6041} -->
+{
+	rootNode =
+	{
+		_class = "RootNode"
+		children =
+		[
+			{
+				_class = "RenderMeshList"
+				children =
+				[
+					{
+						_class = "RenderPrimitiveBox"
+						name = "cargo_body"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_dark.vmat"
+						origin = [ 0.0, 0.0, 0.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 66.0, 42.0, 38.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "top_lid"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_light.vmat"
+						origin = [ 0.0, 0.0, 22.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 70.0, 46.0, 8.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "front_iron"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/iron_dark.vmat"
+						origin = [ 0.0, -23.0, 3.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 72.0, 5.0, 34.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "rear_iron"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/iron_dark.vmat"
+						origin = [ 0.0, 23.0, 3.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 72.0, 5.0, 34.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "cross_left"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_light.vmat"
+						origin = [ 0.0, -26.0, 4.0 ]
+						angles = [ 0.0, 0.0, 33.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 70.0, 5.0, 6.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "cross_right"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_light.vmat"
+						origin = [ 0.0, -26.0, 4.0 ]
+						angles = [ 0.0, 0.0, -33.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 70.0, 5.0, 6.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "lock_plate"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/brass.vmat"
+						origin = [ 0.0, -27.5, 6.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 16.0, 4.0, 14.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+				]
+			},
+			{
+				_class = "AnimationList"
+				children =
+				[
+					{
+						_class = "AnimBindPose"
+						name = "bindPose"
+						activity_name = ""
+						activity_weight = 1
+						weight_list_name = ""
+						fade_in_time = 0.2
+						fade_out_time = 0.2
+						looping = false
+						delta = false
+						worldSpace = false
+						hidden = false
+						anim_markup_ordered = false
+						disable_compression = false
+						disable_interpolation = false
+						enable_scale = false
+						frame_count = 1
+						frame_rate = 30
+					},
+				]
+				default_root_bone_name = ""
+			},
+		]
+		model_archetype = ""
+		primary_associated_entity = ""
+		anim_graph_name = ""
+		base_model_name = ""
+	}
+}

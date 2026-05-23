@@ -1,0 +1,136 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc29:version{3cec427c-1b0e-4d48-a90a-0436f33a6041} -->
+{
+	rootNode =
+	{
+		_class = "RootNode"
+		children =
+		[
+			{
+				_class = "RenderMeshList"
+				children =
+				[
+					{
+						_class = "RenderPrimitiveBox"
+						name = "crate_body"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_plank.vmat"
+						origin = [ 0.0, 0.0, 0.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 42.0, 42.0, 38.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "top_plank"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_light.vmat"
+						origin = [ 0.0, 0.0, 21.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 48.0, 48.0, 5.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "front_cross_a"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_light.vmat"
+						origin = [ 0.0, -24.0, 0.0 ]
+						angles = [ 0.0, 0.0, 37.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 52.0, 5.0, 5.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "front_cross_b"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/wood_light.vmat"
+						origin = [ 0.0, -24.0, 0.0 ]
+						angles = [ 0.0, 0.0, -37.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 52.0, 5.0, 5.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "iron_band_x"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/iron_dark.vmat"
+						origin = [ 0.0, 0.0, 0.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 48.0, 5.0, 44.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+					{
+						_class = "RenderPrimitiveBox"
+						name = "iron_band_y"
+						parent_bone = ""
+						material_name = "materials/sea_horizon/iron_dark.vmat"
+						origin = [ 0.0, 0.0, 0.0 ]
+						angles = [ 0.0, 0.0, 0.0 ]
+						max_u = 1.0
+						max_v = 1.0
+						dimensions = [ 5.0, 48.0, 44.0 ]
+						segments_x = 1
+						segments_y = 1
+						segments_z = 1
+						invert = false
+					},
+				]
+			},
+			{
+				_class = "AnimationList"
+				children =
+				[
+					{
+						_class = "AnimBindPose"
+						name = "bindPose"
+						activity_name = ""
+						activity_weight = 1
+						weight_list_name = ""
+						fade_in_time = 0.2
+						fade_out_time = 0.2
+						looping = false
+						delta = false
+						worldSpace = false
+						hidden = false
+						anim_markup_ordered = false
+						disable_compression = false
+						disable_interpolation = false
+						enable_scale = false
+						frame_count = 1
+						frame_rate = 30
+					},
+				]
+				default_root_bone_name = ""
+			},
+		]
+		model_archetype = ""
+		primary_associated_entity = ""
+		anim_graph_name = ""
+		base_model_name = ""
+	}
+}

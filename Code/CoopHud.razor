@@ -1,0 +1,610 @@
+@using Sandbox
+@using Sandbox.UI
+@using System
+@using System.Globalization
+@using System.Linq
+@inherits PanelComponent
+@namespace Sandbox
+@attribute [Title( "Co-op HUD" )]
+@attribute [Category( "Gameplay" )]
+@attribute [Icon( "dashboard" )]
+
+<root>
+	<div class="vignette-overlay"></div>
+
+	<div class="left-stack" style=@LeftStackStyle>
+		@if ( health.IsValid() )
+		{
+			<div class="stat-row @HealthClass" style=@StatRowStyle>
+				<div class="icon" style=@LargeTextStyle>+</div>
+				<div class="value" style=@LargeTextStyle>@HealthValue</div>
+				<div class="maximum" style=@SmallTextStyle>/@HealthMaximum</div>
+			</div>
+		}
+
+		@if ( stamina.IsValid() )
+		{
+			<div class="stat-row @StaminaClass" style=@StatRowStyle>
+				<div class="icon" style=@LargeTextStyle>⚡</div>
+				<div class="value" style=@LargeTextStyle>@StaminaValue</div>
+				<div class="maximum" style=@SmallTextStyle>/@StaminaMaximum</div>
+			</div>
+		}
+	</div>
+
+	<div class="right-stack" style=@RightStackStyle>
+		<div class="stat-row money-line" style=@StatRowStyle>
+			<div class="current-money" style=@LargeTextStyle>$@CurrentCash</div>
+			<div class="money-slash">/</div>
+			<div class="target-money" style=@LargeTextStyle>$@FormatCash(TargetCash)</div>
+		</div>
+
+		@if ( ShouldShowObjective )
+		{
+			<div class="stat-row objective-line @ObjectiveClass" style=@StatRowStyle>
+				<div class="value" style=@LargeTextStyle>@ObjectiveText</div>
+			</div>
+		}
+	</div>
+
+	@if ( renderObjectivePanel )
+	{
+		<div class="contract-strip @ExitClass( objectivePanelLeaving )" style=@ContractStripStyle>
+			<div class="contract-label" style=@TinyTextStyle>CONTRACT</div>
+			<div class="contract-target" style=@ContractTargetStyle>@ContractTargetText</div>
+			<div class="contract-meta" style=@ContractMetaStyle>
+				<div class="contract-chip @TimerClass">@MissionTimerText</div>
+				<div class="contract-chip value-chip">$@RecoveredValueText</div>
+			</div>
+		</div>
+	}
+
+	@if ( renderRaidStatus )
+	{
+		<div class="raid-strip @RaidPolicyClass @ExitClass( raidStatusLeaving )" style=@RaidStripStyle>
+			<div class="raid-label">@RaidKind // @RaidTitle</div>
+			<div class="raid-count">@RaidCounterLabel: @PiratesRemaining / @PiratesTotal</div>
+		</div>
+	}
+
+	@if ( renderToast )
+	{
+		<div class="toast @presentedToastClass @ExitClass( toastLeaving )" style=@ToastStyle>@presentedToastText</div>
+	}
+
+	@if ( !string.IsNullOrWhiteSpace( PromptText ) )
+	{
+		<div class="prompt" style=@SmallTextStyle>@PromptText</div>
+	}
+
+	@if ( inventory.IsValid() )
+	{
+		<div class="inventory-strip" style=@InventoryStripStyle>
+			@for ( var i = 0; i < InventorySlotCount; i++ )
+			{
+				<div class="inventory-slot @SlotClass(i)" style=@InventorySlotStyle>
+					<div class="slot-key">@SlotKey(i)</div>
+					<div class="slot-name">@SlotName(i)</div>
+				</div>
+			}
+		</div>
+	}
+
+	@if ( HasMusket && !renderRaidOffer )
+	{
+		<div class="weapon-state" style=@WeaponStateStyle>MUSKET READY</div>
+	}
+
+	@if ( renderRaidOffer )
+	{
+		<div class="event-offer-backdrop @presentedOfferPolicyClass @ExitClass( raidOfferLeaving )">
+			<div class="system-edge edge-left"></div>
+			<div class="system-window">
+				<div class="system-header">
+					<div class="system-alert">!</div>
+					<div class="system-kind">@presentedOfferKind</div>
+					<div class="system-policy">@presentedOfferPolicyText</div>
+				</div>
+
+				<div class="system-divider"></div>
+				<div class="system-title">@presentedOfferTitle</div>
+				<div class="system-briefing">@presentedOfferBriefing</div>
+
+				<div class="system-section">GOAL</div>
+				<div class="system-objective">@presentedOfferObjective</div>
+
+				<div class="system-readout">
+					<div class="readout-row">
+						<div class="readout-label">TARGET</div>
+						<div class="readout-value">@presentedOfferTarget</div>
+					</div>
+					<div class="readout-row reward">
+						<div class="readout-label">REWARD</div>
+						<div class="readout-value">$@presentedOfferReward</div>
+					</div>
+				</div>
+
+				<div class="system-warning">
+					<div class="warning-label">WARNING</div>
+					<div class="warning-copy">@presentedOfferWarning</div>
+				</div>
+
+				<div class="event-actions">
+					<button class="event-button accept" onclick=@StartPirateRaid>@presentedOfferAcceptText</button>
+					@if ( presentedOfferCanDismiss )
+					{
+						<button class="event-button decline" onclick=@DismissPirateRaid>DECLINE</button>
+					}
+				</div>
+
+				@if ( !presentedOfferCanDismiss )
+				{
+					<div class="system-lock">DECLINE OPTION LOCKED // MANDATORY EVENT</div>
+				}
+			</div>
+			<div class="system-edge edge-right"></div>
+		</div>
+	}
+
+	@if ( ShowControls )
+	{
+		<div class="controls">WASD | SHIFT | SPACE | E | G | MOUSE1 | MOUSE3</div>
+	}
+</root>
+
+@code
+{
+	[Property] public float ScreenX { get; set; } = 32f;
+	[Property] public float ScreenY { get; set; } = 32f;
+	[Property] public float RightMargin { get; set; } = 32f;
+	[Property] public float LineHeight { get; set; } = 34f;
+	[Property] public float LargeTextSize { get; set; } = 56f;
+	[Property] public float SmallTextSize { get; set; } = 28f;
+	[Property] public float ContractTextSize { get; set; } = 24f;
+	[Property] public float StaminaDisplayMaximum { get; set; } = 40f;
+	[Property] public int BankedCash { get; set; } = 3307;
+	[Property] public int TargetCash { get; set; } = 26946;
+	[Property] public bool ShowControls { get; set; }
+
+	HealthComponent health;
+	StaminaComponent stamina;
+	PlayerInteractor interactor;
+	PlayerInventory inventory;
+	PlayerMusket musket;
+	ObjectiveManager objective;
+	PirateRaidController raid;
+	RealTimeSince timeSinceRefresh = 1f;
+	const float SurfaceExitDuration = 0.24f;
+
+	bool renderObjectivePanel;
+	bool objectivePanelLeaving;
+	RealTimeSince objectivePanelHiddenSince;
+	bool renderRaidStatus;
+	bool raidStatusLeaving;
+	RealTimeSince raidStatusHiddenSince;
+	bool renderRaidOffer;
+	bool raidOfferLeaving;
+	RealTimeSince raidOfferHiddenSince;
+	bool renderToast;
+	bool toastLeaving;
+	RealTimeSince toastHiddenSince;
+	string presentedToastText = string.Empty;
+	string presentedToastClass = "neutral";
+	string presentedOfferKind = "SPECIAL QUEST";
+	string presentedOfferTitle = "UNKNOWN EVENT";
+	string presentedOfferObjective = "SURVIVE";
+	string presentedOfferBriefing = string.Empty;
+	string presentedOfferWarning = string.Empty;
+	string presentedOfferTarget = "0 HOSTILES";
+	string presentedOfferReward = "0";
+	string presentedOfferPolicyClass = "optional";
+	string presentedOfferPolicyText = "OPTIONAL";
+	string presentedOfferAcceptText = "ACCEPT";
+	bool presentedOfferCanDismiss = true;
+
+	protected override void OnStart()
+	{
+		base.OnStart();
+
+		RefreshReferences();
+		UpdateAnimatedSurfaces();
+		StateHasChanged();
+	}
+
+	protected override void OnUpdate()
+	{
+		base.OnUpdate();
+
+		if ( timeSinceRefresh < 0.05f )
+			return;
+
+		timeSinceRefresh = 0f;
+		RefreshReferences();
+		UpdateAnimatedSurfaces();
+		StateHasChanged();
+	}
+
+	void UpdateAnimatedSurfaces()
+	{
+		if ( ShouldShowRaidOffer )
+			CaptureOfferPresentation();
+
+		if ( !string.IsNullOrWhiteSpace( ToastText ) )
+		{
+			presentedToastText = ToastText;
+			presentedToastClass = ToastClass;
+		}
+
+		UpdateAnimatedSurface( ShouldShowObjective, ref renderObjectivePanel, ref objectivePanelLeaving, ref objectivePanelHiddenSince );
+		UpdateAnimatedSurface( ShouldShowRaidStatus, ref renderRaidStatus, ref raidStatusLeaving, ref raidStatusHiddenSince );
+		UpdateAnimatedSurface( ShouldShowRaidOffer, ref renderRaidOffer, ref raidOfferLeaving, ref raidOfferHiddenSince );
+		UpdateAnimatedSurface( !string.IsNullOrWhiteSpace( ToastText ), ref renderToast, ref toastLeaving, ref toastHiddenSince );
+	}
+
+	void UpdateAnimatedSurface( bool visible, ref bool rendered, ref bool leaving, ref RealTimeSince hiddenSince )
+	{
+		if ( visible )
+		{
+			rendered = true;
+			leaving = false;
+			return;
+		}
+
+		if ( !rendered )
+			return;
+
+		if ( !leaving )
+		{
+			leaving = true;
+			hiddenSince = 0f;
+			return;
+		}
+
+		if ( hiddenSince >= SurfaceExitDuration )
+		{
+			rendered = false;
+			leaving = false;
+		}
+	}
+
+	void CaptureOfferPresentation()
+	{
+		presentedOfferKind = RaidKind;
+		presentedOfferTitle = RaidTitle;
+		presentedOfferObjective = RaidObjective;
+		presentedOfferBriefing = RaidBriefing;
+		presentedOfferWarning = RaidWarning;
+		presentedOfferTarget = RaidTargetText;
+		presentedOfferReward = RaidRewardText;
+		presentedOfferPolicyClass = RaidPolicyClass;
+		presentedOfferPolicyText = RaidPolicyText;
+		presentedOfferAcceptText = RaidAcceptText;
+		presentedOfferCanDismiss = CanDismissRaidOffer;
+	}
+
+	void RefreshReferences()
+	{
+		var player = FindPlayerObject();
+
+		if ( !health.IsValid() )
+			health = player?.GetComponent<HealthComponent>();
+
+		if ( !stamina.IsValid() )
+			stamina = player?.GetComponent<StaminaComponent>();
+
+		if ( !interactor.IsValid() )
+			interactor = player?.GetComponent<PlayerInteractor>();
+
+		if ( !inventory.IsValid() )
+			inventory = player?.GetComponent<PlayerInventory>();
+
+		if ( !musket.IsValid() )
+			musket = player?.GetComponent<PlayerMusket>();
+
+		if ( !objective.IsValid() )
+			objective = Scene.GetAllComponents<ObjectiveManager>().FirstOrDefault();
+
+		raid = FindPresentedRaid();
+	}
+
+	PirateRaidController FindPresentedRaid()
+	{
+		var controllers = Scene.GetAllComponents<PirateRaidController>()
+			.Where( x => x.IsValid() )
+			.ToArray();
+
+		return controllers.FirstOrDefault( x => x.IsOfferVisible )
+			?? controllers.FirstOrDefault( x => x.IsRaidActive )
+			?? controllers.FirstOrDefault( x => x.HasEventFeedback )
+			?? controllers.FirstOrDefault();
+	}
+
+	GameObject FindPlayerObject()
+	{
+		var controller = Scene.GetAllComponents<PlayerController>().FirstOrDefault( x => !x.IsProxy );
+		if ( controller.IsValid() )
+			return controller.GameObject;
+
+		var taggedHealth = Scene.GetAllComponents<HealthComponent>().FirstOrDefault( x => x.GameObject.Tags.Has( "player" ) );
+		if ( taggedHealth.IsValid() )
+			return taggedHealth.GameObject;
+
+		return Scene.GetAllComponents<HealthComponent>().FirstOrDefault()?.GameObject;
+	}
+
+	int HealthValue => health.IsValid()
+		? MathF.Round( health.IsDead ? 0f : MathF.Max( health.CurrentHealth, 0f ) ).FloorToInt()
+		: 0;
+
+	int HealthMaximum => health.IsValid()
+		? MathF.Round( MathF.Max( health.MaxHealth, 1f ) ).FloorToInt()
+		: 100;
+
+	string HealthClass => health.IsValid() && health.IsDead ? "danger" : "health";
+
+	int StaminaValue
+	{
+		get
+		{
+			if ( !stamina.IsValid() )
+				return StaminaMaximum;
+
+			var fraction = Math.Clamp( stamina.Fraction, 0f, 1f );
+			return MathF.Round( fraction * StaminaMaximum ).FloorToInt();
+		}
+	}
+
+	int StaminaMaximum => MathF.Round( MathF.Max( StaminaDisplayMaximum, 1f ) ).FloorToInt();
+	string StaminaClass => stamina.IsValid() && stamina.IsExhausted ? "danger" : "stamina";
+
+	int CurrentCash => Math.Max( BankedCash + (objective.IsValid() ? objective.EarnedCash : 0), 0 );
+	string ObjectiveText => objective.IsValid() ? $"{objective.CompletedCount} / {objective.RequiredCount}" : string.Empty;
+	string ObjectiveClass => objective.IsValid() && objective.ContractState == ObjectiveContractState.Complete ? "complete"
+		: objective.IsValid() && objective.ContractState == ObjectiveContractState.Failed ? "danger"
+		: "objective";
+	bool ShouldShowObjective => objective.IsValid()
+		&& objective.ContractStarted
+		&& objective.ContractState != ObjectiveContractState.Complete
+		&& !ShouldShowRaidStatus;
+	string ContractTargetText => HudCaps( objective.IsValid() ? FirstNonEmpty( objective.ContractTarget, objective.ObjectiveName, "CONTRACT" ) : "CONTRACT" );
+	string MissionTimerText => !objective.IsValid()
+		? "--:--"
+		: objective.ContractState == ObjectiveContractState.Complete ? "DONE"
+		: objective.ContractState == ObjectiveContractState.Failed ? "FAILED"
+		: objective.ContractState == ObjectiveContractState.Paused ? "PAUSED"
+		: objective.ContractState == ObjectiveContractState.Active ? FormatTimer( objective.RemainingSeconds ) : "READY";
+	string RecoveredValueText => objective.IsValid() && objective.TargetValue > 0
+		? $"{FormatCash( objective.RecoveredValue )}/{FormatCash( objective.TargetValue )}"
+		: FormatCash( objective.IsValid() ? objective.RecoveredValue : 0 );
+	string TimerClass => objective.IsValid() && objective.ContractState == ObjectiveContractState.Complete ? "complete"
+		: objective.IsValid() && objective.ContractState == ObjectiveContractState.Failed ? "danger"
+		: objective.IsValid() && objective.RemainingSeconds <= 30f ? "warning"
+		: "timer";
+	bool HasPlayerFeedback => interactor.IsValid()
+		&& interactor.FeedbackRemaining > 0f
+		&& !string.IsNullOrWhiteSpace( interactor.FeedbackText );
+	bool HasRaidFeedback => raid.IsValid() && raid.HasEventFeedback;
+	bool HasContractFeedback => objective.IsValid() && objective.HasContractFeedback;
+	string ToastText => HudCaps( HasPlayerFeedback ? interactor.FeedbackText
+		: HasRaidFeedback ? raid.EventFeedbackText
+		: HasContractFeedback ? objective.ContractFeedbackText
+		: string.Empty );
+	string ToastClass => HasPlayerFeedback ? interactor.FeedbackClass
+		: HasRaidFeedback ? raid.EventFeedbackClass
+		: HasContractFeedback ? objective.ContractFeedbackClass
+		: "neutral";
+	bool ShouldShowRaidOffer => raid.IsValid() && raid.IsOfferVisible;
+	bool ShouldShowRaidStatus => raid.IsValid() && raid.IsRaidActive;
+	bool CanDismissRaidOffer => raid.IsValid() && raid.CanDismissOffer;
+	bool HasMusket => musket.IsValid() && musket.HasMusket;
+	int PiratesRemaining => raid.IsValid() ? raid.PiratesRemaining : 0;
+	int PiratesTotal => raid.IsValid() ? raid.TotalPirates : 0;
+	string RaidKind => HudCaps( raid.IsValid() ? FirstNonEmpty( raid.EventKind, "SPECIAL QUEST" ) : "SPECIAL QUEST" );
+	string RaidTitle => HudCaps( raid.IsValid() ? FirstNonEmpty( raid.EventTitle, "UNKNOWN EVENT" ) : "UNKNOWN EVENT" );
+	string RaidObjective => HudCaps( raid.IsValid() ? FirstNonEmpty( raid.EventObjective, "SURVIVE" ) : "SURVIVE" );
+	string RaidBriefing => HudCaps( raid.IsValid() ? FirstNonEmpty( raid.EventBriefing, "A new mission has been issued." ) : string.Empty );
+	string RaidWarning => HudCaps( raid.IsValid() ? FirstNonEmpty( raid.FailureWarning, "Failure will have consequences." ) : string.Empty );
+	string RaidCounterLabel => HudCaps( raid.IsValid() ? FirstNonEmpty( raid.ActiveCounterLabel, "HOSTILES LEFT" ) : "HOSTILES LEFT" );
+	string RaidTargetText => raid.IsValid() ? $"{raid.ConfiguredEnemyCount} HOSTILES" : "0 HOSTILES";
+	string RaidRewardText => FormatCash( raid.IsValid() ? raid.RewardCash : 0 );
+	string RaidPolicyClass => raid.IsValid() && raid.IsMandatoryOffer ? "mandatory" : "optional";
+	string RaidPolicyText => raid.IsValid() && raid.IsMandatoryOffer ? "MANDATORY" : "OPTIONAL";
+	string RaidAcceptText => raid.IsValid() && raid.IsMandatoryOffer ? "BEGIN MISSION" : "ACCEPT";
+
+	string PromptText
+	{
+		get
+		{
+			if ( !interactor.IsValid() || string.IsNullOrWhiteSpace( interactor.InteractionPrompt ) )
+				return string.Empty;
+
+			if ( interactor.InteractionProgress <= 0f )
+				return interactor.InteractionPrompt;
+
+			return $"{interactor.InteractionPrompt} {BuildProgressBar( interactor.InteractionProgress )}";
+		}
+	}
+
+	string LeftStackStyle => $"left: {Px( ScreenX )}; top: {Px( ScreenY )};";
+	string RightStackStyle => $"right: {Px( RightMargin )}; top: {Px( ScreenY )};";
+	string StatRowStyle => $"min-height: {Px( MathF.Max( LineHeight, LargeTextSize ) )};";
+	string LargeTextStyle => $"font-size: {Px( LargeTextSize )}; line-height: 1.0;";
+	string SmallTextStyle => $"font-size: {Px( SmallTextSize )}; line-height: 1.0;";
+	string TinyTextStyle => $"font-size: {Px( MathF.Max( ContractTextSize - 5f, 10f ) )}; line-height: 1.15;";
+	string ContractTargetStyle => $"font-size: {Px( ContractTextSize )}; line-height: 1.15;";
+	string ContractMetaStyle => $"font-size: {Px( MathF.Max( ContractTextSize - 2f, 16f ) )}; line-height: 1.15;";
+	string ContractStripStyle => $"top: {Px( ScreenY + 76f )};";
+	string RaidStripStyle => $"top: {Px( ScreenY + 76f )}; font-size: {Px( MathF.Max( ContractTextSize + 2f, 18f ) )};";
+	string ToastStyle => $"top: {Px( ScreenY + 144f )}; font-size: {Px( MathF.Max( ContractTextSize, 18f ) )};";
+	string InventoryStripStyle => $"bottom: {Px( ScreenY + 28f )};";
+	string InventorySlotStyle => $"font-size: {Px( MathF.Max( SmallTextSize - 2f, 12f ) )};";
+	string WeaponStateStyle => $"bottom: {Px( ScreenY + 88f )}; font-size: {Px( MathF.Max( ContractTextSize - 2f, 12f ) )};";
+	int InventorySlotCount => inventory.IsValid() ? Math.Max( inventory.InventorySize, 0 ) : 0;
+	string ExitClass( bool leaving ) => leaving ? "leaving" : string.Empty;
+
+	void StartPirateRaid()
+	{
+		if ( raid.IsValid() )
+			raid.StartRaid();
+	}
+
+	void DismissPirateRaid()
+	{
+		if ( raid.IsValid() )
+			raid.DismissOffer();
+	}
+
+	string SlotKey( int index )
+	{
+		return (index + 1).ToString( CultureInfo.InvariantCulture );
+	}
+
+	string SlotName( int index )
+	{
+		var item = SlotItem( index );
+		return item.IsValid() ? FirstNonEmpty( item.ItemName, "Item" ) : "EMPTY";
+	}
+
+	string SlotClass( int index )
+	{
+		var classes = index == (inventory.IsValid() ? inventory.ActiveSlotIndex : -1) ? "active" : "inactive";
+		classes += SlotItem( index ).IsValid() ? " filled" : " empty";
+		return classes;
+	}
+
+	PickupableItem SlotItem( int index )
+	{
+		if ( !inventory.IsValid() || inventory.Slots is null || index < 0 || index >= inventory.Slots.Length )
+			return null;
+
+		return inventory.Slots[index].Item;
+	}
+
+	string FormatCash( int value )
+	{
+		return Math.Max( value, 0 ).ToString( "N0", CultureInfo.InvariantCulture ).Replace( ",", "." );
+	}
+
+	string FormatTimer( float seconds )
+	{
+		var totalSeconds = Math.Max( seconds, 0f ).CeilToInt();
+		var minutes = totalSeconds / 60;
+		var remainder = totalSeconds % 60;
+		return $"{minutes:00}:{remainder:00}";
+	}
+
+	string FirstNonEmpty( params string[] values )
+	{
+		foreach ( var value in values )
+		{
+			if ( !string.IsNullOrWhiteSpace( value ) )
+				return value;
+		}
+
+		return string.Empty;
+	}
+
+	string HudCaps( string value )
+	{
+		return string.IsNullOrWhiteSpace( value ) ? string.Empty : value.ToUpperInvariant();
+	}
+
+	string BuildProgressBar( float value )
+	{
+		var filled = (int)MathF.Min( Math.Clamp( value, 0f, 1f ) * 12f, 12f );
+		return "[" + new string( '|', filled ).PadRight( 12, '.' ) + "]";
+	}
+
+	string Px( float value )
+	{
+		return MathF.Max( value, 0f ).ToString( "0.###", CultureInfo.InvariantCulture ) + "px";
+	}
+
+	protected override int BuildHash()
+	{
+		unchecked
+		{
+			var hash = 17;
+
+			AddHash( ref hash, ScreenX );
+			AddHash( ref hash, ScreenY );
+			AddHash( ref hash, RightMargin );
+			AddHash( ref hash, LineHeight );
+			AddHash( ref hash, LargeTextSize );
+			AddHash( ref hash, SmallTextSize );
+			AddHash( ref hash, ContractTextSize );
+			AddHash( ref hash, StaminaDisplayMaximum );
+			AddHash( ref hash, BankedCash );
+			AddHash( ref hash, TargetCash );
+			AddHash( ref hash, ShowControls );
+			AddHash( ref hash, HealthValue );
+			AddHash( ref hash, HealthMaximum );
+			AddHash( ref hash, HealthClass );
+			AddHash( ref hash, StaminaValue );
+			AddHash( ref hash, StaminaMaximum );
+			AddHash( ref hash, StaminaClass );
+			AddHash( ref hash, CurrentCash );
+			AddHash( ref hash, ShouldShowObjective );
+			AddHash( ref hash, renderObjectivePanel );
+			AddHash( ref hash, objectivePanelLeaving );
+			AddHash( ref hash, ObjectiveText );
+			AddHash( ref hash, ObjectiveClass );
+			AddHash( ref hash, ContractTargetText );
+			AddHash( ref hash, MissionTimerText );
+			AddHash( ref hash, RecoveredValueText );
+			AddHash( ref hash, TimerClass );
+			AddHash( ref hash, ToastText );
+			AddHash( ref hash, ToastClass );
+			AddHash( ref hash, renderToast );
+			AddHash( ref hash, toastLeaving );
+			AddHash( ref hash, presentedToastText );
+			AddHash( ref hash, presentedToastClass );
+			AddHash( ref hash, PromptText );
+			AddHash( ref hash, ShouldShowRaidOffer );
+			AddHash( ref hash, ShouldShowRaidStatus );
+			AddHash( ref hash, renderRaidOffer );
+			AddHash( ref hash, raidOfferLeaving );
+			AddHash( ref hash, renderRaidStatus );
+			AddHash( ref hash, raidStatusLeaving );
+			AddHash( ref hash, CanDismissRaidOffer );
+			AddHash( ref hash, PiratesRemaining );
+			AddHash( ref hash, PiratesTotal );
+			AddHash( ref hash, RaidKind );
+			AddHash( ref hash, RaidTitle );
+			AddHash( ref hash, RaidObjective );
+			AddHash( ref hash, RaidBriefing );
+			AddHash( ref hash, RaidWarning );
+			AddHash( ref hash, RaidCounterLabel );
+			AddHash( ref hash, RaidPolicyClass );
+			AddHash( ref hash, RaidRewardText );
+			AddHash( ref hash, presentedOfferKind );
+			AddHash( ref hash, presentedOfferTitle );
+			AddHash( ref hash, presentedOfferObjective );
+			AddHash( ref hash, presentedOfferBriefing );
+			AddHash( ref hash, presentedOfferWarning );
+			AddHash( ref hash, presentedOfferTarget );
+			AddHash( ref hash, presentedOfferReward );
+			AddHash( ref hash, presentedOfferPolicyClass );
+			AddHash( ref hash, presentedOfferPolicyText );
+			AddHash( ref hash, presentedOfferAcceptText );
+			AddHash( ref hash, presentedOfferCanDismiss );
+			AddHash( ref hash, HasMusket );
+			AddHash( ref hash, InventorySlotCount );
+			AddHash( ref hash, inventory.IsValid() ? inventory.ActiveSlotIndex : -1 );
+
+			for ( var i = 0; i < InventorySlotCount; i++ )
+			{
+				AddHash( ref hash, SlotName( i ) );
+				AddHash( ref hash, SlotClass( i ) );
+			}
+
+			return hash;
+		}
+	}
+
+	static void AddHash<T>( ref int hash, T value )
+	{
+		var valueHash = value is null ? 0 : value.GetHashCode();
+		hash = (hash * 397) ^ valueHash;
+	}
+}

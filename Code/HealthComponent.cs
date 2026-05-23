@@ -8,7 +8,7 @@ namespace Sandbox;
 public sealed class HealthComponent : Component, IHoldInteractable
 {
 	[Property] public float MaxHealth { get; set; } = 100f;
-	[Property] public float CurrentHealth { get; set; } = 100f;
+	[Property, Sync] public float CurrentHealth { get; set; } = 100f;
 	[Property] public float RespawnDelay { get; set; } = 2f;
 	[Property] public float ReviveHoldDuration { get; set; } = 2f;
 	[Property] public float ReviveHealthFraction { get; set; } = 0.5f;
@@ -18,7 +18,7 @@ public sealed class HealthComponent : Component, IHoldInteractable
 	[Property] public bool DisableMovementOnDeath { get; set; } = true;
 	[Property] public bool HideBodyOnDeath { get; set; }
 
-	public bool IsDead { get; private set; }
+	[Sync] public bool IsDead { get; private set; }
 	public float HoldDuration => ReviveHoldDuration;
 	public string HoldPrompt => "Hold E: Revive";
 

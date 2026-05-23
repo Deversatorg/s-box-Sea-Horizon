@@ -47,8 +47,6 @@ public sealed class ArcadeBoatController : Component, IInteractable
 		if ( driver.IsProxy )
 			return;
 
-		DebugOverlay.ScreenText( new Vector2( 32f, 140f ), "Boat: W/S throttle | A/D steer | E exit", 16f, TextFlag.LeftTop, Color.Cyan, 0.05f );
-
 		if ( timeSinceEntered > 0.25f && Input.Pressed( ExitAction ) )
 			ExitDriver();
 	}

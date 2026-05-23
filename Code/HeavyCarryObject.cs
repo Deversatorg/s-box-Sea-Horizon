@@ -9,7 +9,7 @@ public sealed class HeavyCarryObject : Component
 	[Property] public int MaxCarriers { get; set; } = 2;
 	[Property] public float UnderstaffedSpeedMultiplier { get; set; } = 0.35f;
 
-	readonly HashSet<CarryInteractor> carriers = new();
+	readonly HashSet<PlayerGrabber> carriers = new();
 	bool savedPhysics;
 	bool savedGravity;
 	float savedLinearDamping;
@@ -27,7 +27,7 @@ public sealed class HeavyCarryObject : Component
 	public bool HasEnoughCarriers => CarrierCount >= System.Math.Max( RequiredCarriers, 1 );
 	public float SpeedMultiplier => HasEnoughCarriers ? 1f : System.MathF.Max( UnderstaffedSpeedMultiplier, 0f );
 
-	public bool TryRegister( CarryInteractor carrier )
+	public bool TryRegister( PlayerGrabber carrier )
 	{
 		if ( !carrier.IsValid() )
 			return false;
@@ -61,7 +61,7 @@ public sealed class HeavyCarryObject : Component
 		physicsBody.Sleeping = false;
 	}
 
-	public void Release( CarryInteractor carrier, Rigidbody body )
+	public void Release( PlayerGrabber carrier, Rigidbody body )
 	{
 		if ( carrier is null )
 			return;
